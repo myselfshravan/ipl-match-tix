@@ -1,0 +1,14 @@
+name: Ping Flask Endpoint Every 2 Minutes
+
+on:
+  schedule:
+    - cron: '*/2 * * * *'  # every 5 minutes
+  workflow_dispatch:       # allows manual run
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the Flask endpoint
+        run: |
+          curl -X POST https://ipl-match-tix.vercel.app/ping
