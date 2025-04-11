@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
-from event import send_push_notifications, fetch_event_details
+from .event import send_push_notifications, fetch_event_details
 
 app = Flask(__name__)
 
