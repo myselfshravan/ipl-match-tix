@@ -2,8 +2,8 @@ name: Ping Flask Endpoint Every 5 Minutes
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # every 5 minutes
-  workflow_dispatch:       # allows manual run
+    - cron: "*/5 * * * *" # every 5 minutes
+  workflow_dispatch: # allows manual run
 
 jobs:
   ping:
@@ -12,3 +12,9 @@ jobs:
       - name: Ping the Flask endpoint
         run: |
           curl -X POST https://ipl-match-tix.vercel.app/ping
+            if [ $? -ne 0 ]; then
+                echo "Failed to ping the endpoint"
+                exit 1
+            else
+                echo "Successfully pinged the endpoint"
+            fi
