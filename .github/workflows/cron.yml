@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Ping the Flask endpoint
         run: |
-          curl -X POST https://ipl-match-tix.vercel.app/ping
+          curl -X GET https://ipl-match-tix.vercel.app/ping
             if [ $? -ne 0 ]; then
                 echo "Failed to ping the endpoint"
                 exit 1
