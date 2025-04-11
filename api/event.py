@@ -1,7 +1,8 @@
 import firebase_admin
-from firebase_admin import credentials, messaging
+from firebase_admin import credentials, messaging, firestore
 import requests
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,6 +26,9 @@ if not firebase_admin._apps:
     cred = credentials.Certificate(service_account_info)
     firebase_admin.initialize_app(cred)
 
+# Initialize Firestore
+db = firestore.client()
+
 tokens = [
     "fT04LaZzayopUX6gdVRkDi:APA91bH6Wl2Rw0I6aOTnh9aKmJk5FFzjdKJ7ZOKgGWy-b5Uwzp9U9A7RRnXSpM5chGpZa0jLv2Aeyqp_AJ-5fBrhaZGtRoxFBDDf9-1qMXiJQlAtd-lFnrE",
     "dftG_SJkzxP8zgVwSqpsLH:APA91bFiG9Mz8S0xaigCu4cx9HJxJuRJzRtJnx0QwhnOu3b9im2Mx5O6fy7jp5UNle1geweU9UNuU8X6Sh11tVFZX5rlgTC1HAvCoH2cUbAQVG1vVMlHKFQ",
@@ -32,19 +36,19 @@ tokens = [
 ]
 
 
-def send_push_notifications():
+def send_push_notifications(event_data=None):
     results = []
     for new_token in tokens:
         message = messaging.Message(
             notification=messaging.Notification(
-                title="🔥 Hello from Front!",
-                body="Your notification just landed 🛬",
+                title="🎫 New IPL Match Available!",
+                body=f"{event_data['team_1']} vs {event_data['team_2']} at {event_data['venue']}" if event_data else "New event available!",
             ),
             token=new_token,
             webpush=messaging.WebpushConfig(
                 notification=messaging.WebpushNotification(
-                    title="🔥 Hello the event is Live!",
-                    body="Your notification just landed 🛬",
+                    title="🏏 IPL Match Tickets Alert!",
+                    body=f"Tickets for {event_data['team_1']} vs {event_data['team_2']} on {event_data['event_date']}" if event_data else "New match tickets available!",
                     icon="https://github.com/user-attachments/assets/d4d3382b-e981-4391-afa7-d99332c5ebed",
                     badge="https://github.com/user-attachments/assets/d4d3382b-e981-4391-afa7-d99332c5ebed",
                     require_interaction=True,
@@ -59,6 +63,56 @@ def send_push_notifications():
             print("❌ Error sending message:", e)
             results.append({"token": new_token, "status": "error", "error": str(e)})
     return results
+
+
+def store_event(event_data):
+    try:
+        # Store in Firestore with timestamp
+        doc_ref = db.collection('events').document('latest')
+        doc_ref.set({
+            **event_data,
+            'timestamp': firestore.SERVER_TIMESTAMP
+        })
+        return True
+    except Exception as e:
+        print(f"Error storing event: {e}")
+        return False
+
+
+def get_last_stored_event():
+    try:
+        doc_ref = db.collection('events').document('latest')
+        doc = doc_ref.get()
+        return doc.to_dict() if doc.exists else None
+    except Exception as e:
+        print(f"Error fetching last event: {e}")
+        return None
+
+
+def compare_events(new_event, stored_event):
+    # Check for Chennai Super Kings match
+    if new_event.get('team_2') == "Chennai Super Kings":
+        return True
+
+    if not stored_event:
+        return True
+
+    # Compare using ISO date if available, otherwise use display date
+    date_changed = False
+    if 'event_iso_date' in new_event and 'event_iso_date' in stored_event:
+        date_changed = new_event['event_iso_date'] != stored_event['event_iso_date']
+    else:
+        date_changed = new_event['event_date'] != stored_event['event_date']
+
+    # Compare relevant fields
+    return (new_event['event_name'] != stored_event['event_name'] or
+            date_changed or
+            new_event['team_1'] != stored_event['team_1'] or
+            new_event['team_2'] != stored_event['team_2'])
+
+
+def is_csk_match(event_data):
+    return event_data.get('team_2') == "Chennai Super Kings"
 
 
 def fetch_event_details():
@@ -82,14 +136,38 @@ def fetch_event_details():
         event_details = []
 
         for event in events:
+            # Use the precise ISO format for date parsing if available
+            try:
+                event_date = datetime.fromisoformat(event.get("event_Date"))
+            except (ValueError, TypeError):
+                try:
+                    # Fallback to display date format
+                    event_date = datetime.strptime(event.get("event_Display_Date"), "%a, %b %d, %Y %I:%M %p")
+                except (ValueError, TypeError):
+                    print(
+                        f"Failed to parse date for event: {event.get('event_Name')} - Display Date: {event.get('event_Display_Date')} - ISO Date: {event.get('event_Date')}")
+                    continue
             details = {
                 "event_name": event.get("event_Name"),
                 "team_1": event.get("team_1"),
                 "team_2": event.get("team_2"),
-                "event_date": event.get("event_Display_Date"),
+                "event_date": event.get("event_Display_Date"),  # Keep display format for UI
+                "event_iso_date": event.get("event_Date"),  # Keep ISO format for reference
                 "venue": event.get("venue_Name"),
+                "_date_obj": event_date  # Add temporary field for sorting
             }
             event_details.append(details)
+
+        # Sort events by date, latest (furthest in future) first
+        current_date = datetime.now()
+        # Filter out past events and sort by date in descending order
+        upcoming_events = [e for e in event_details if e["_date_obj"] >= current_date]
+        upcoming_events.sort(key=lambda x: x["_date_obj"], reverse=True)
+        event_details = upcoming_events
+
+        # Remove temporary sorting field
+        for event in event_details:
+            del event["_date_obj"]
 
         return event_details
 
