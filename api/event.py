@@ -33,6 +33,9 @@ tokens = [
     "fT04LaZzayopUX6gdVRkDi:APA91bH6Wl2Rw0I6aOTnh9aKmJk5FFzjdKJ7ZOKgGWy-b5Uwzp9U9A7RRnXSpM5chGpZa0jLv2Aeyqp_AJ-5fBrhaZGtRoxFBDDf9-1qMXiJQlAtd-lFnrE",
     "dftG_SJkzxP8zgVwSqpsLH:APA91bFiG9Mz8S0xaigCu4cx9HJxJuRJzRtJnx0QwhnOu3b9im2Mx5O6fy7jp5UNle1geweU9UNuU8X6Sh11tVFZX5rlgTC1HAvCoH2cUbAQVG1vVMlHKFQ",
     "eZ6l27Fw9Amw-r0OewG0aN:APA91bErHZ9Dy0Lw51jRvZjaynMno35H-QNwLzQDAUbQsmF9qIScApnXFIJjJQev5F7pAkjCMs5lFL-2hfDVGovDRMYPnVxNwyC7O8GmLIxRZpRPF9KNGM0",
+    "f17IYE3SbSR8FsZ2_eshEL:APA91bGHVa7m1ATN9zMccyTc55MBsgC7KDyRzFVhtThgmZRC6YRD_CtVYsM7dRaEIFDJu5GGr7C-fGgDIO4m5_UqJcGcPqKHl3eEMy_vxFq8YhaNiYyPYp0",
+    "foX0_uMYimJtMV8wJ4Fehq:APA91bEHnrlGbcY8HBoV9ItT5TU_nuEqd69dKCbC-XhKM9ovrNNovD-Zwodh1xUoijZLpYVMv7YpfVgxfFPS08FPkmuG-fmA6j3Vr7Npw-w24gMKeOdd6WY",
+    "eHSm0QsG3C52uaMUBlWjvv:APA91bHCTEuE9dPxHy-3SecQjf2N-IEGc38mPjpsuFt6uJ2JFin0-c93oRYPeIdiH2JA8ia-ofMnnKI40lVJEMfiU55fsP3cemB-YlhK6lI78d7sDJ5bgPg"
 ]
 
 
@@ -41,8 +44,8 @@ def send_push_notifications(event_data=None):
     for new_token in tokens:
         message = messaging.Message(
             notification=messaging.Notification(
-                title="🎫 New IPL Match Available!",
-                body=f"{event_data['team_1']} vs {event_data['team_2']} at {event_data['venue']}" if event_data else "New event available!",
+                title="🎫 New IPL Match Available! (Test)",
+                body=f"{event_data['team_1']} vs {event_data['team_2']} at {event_data['venue']}" if event_data else "New event available! (Test)",
             ),
             token=new_token,
             webpush=messaging.WebpushConfig(
