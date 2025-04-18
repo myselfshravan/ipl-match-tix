@@ -50,14 +50,9 @@ def ping():
     # Get last stored event from Firestore for notification check
     stored_event = get_last_stored_event()
 
-    # Check specifically for CSK match
-    is_csk = latest_event.get('team_2') == "Chennai Super Kings"
-    if is_csk:
-        print("[Cron] Chennai Super Kings match detected!")
-
     # Compare events for notification
     if compare_events(latest_event, stored_event):
-        notification_reason = "CSK match" if is_csk else "New event"
+        notification_reason = "New event" if not stored_event else "Event change"
         print(f"[Cron] {notification_reason} detected: {latest_event['event_name']}")
         send_push_notifications(latest_event)
         return {

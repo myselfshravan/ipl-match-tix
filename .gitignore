@@ -13,3 +13,4 @@ env.bak/
 venv.bak/
 .env
 api/dummy-app-firebase-adminsdk.json
+.idea/*
