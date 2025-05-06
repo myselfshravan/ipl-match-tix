@@ -1,28 +1,79 @@
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fexamples%2Ftree%2Fmain%2Fpython%2Fflask3&demo-title=Flask%203%20%2B%20Vercel&demo-description=Use%20Flask%203%20on%20Vercel%20with%20Serverless%20Functions%20using%20the%20Python%20Runtime.&demo-url=https%3A%2F%2Fflask3-python-template.vercel.app%2F&demo-image=https://assets.vercel.com/image/upload/v1669994156/random/flask.png)
+# IPL Match Ticket Notifier 🏏
 
-# Flask + Vercel
+An automated notification system that monitors IPL match ticket availability on TicketGenie and sends push notifications when new matches become available. Special focus on Chennai Super Kings matches!
 
-This example shows how to use Flask 3 on Vercel with Serverless Functions using the [Python Runtime](https://vercel.com/docs/concepts/functions/serverless-functions/runtimes/python).
+## Features 🌟
 
-## Demo
+- Real-time monitoring of IPL match tickets on TicketGenie
+- Push notifications for new match ticket availability
+- Special notifications for Chennai Super Kings matches
+- Firebase-powered data storage and notifications
+- Serverless deployment on Vercel
 
-https://flask-python-template.vercel.app/
+## Tech Stack 💻
 
-## How it Works
+- **Backend**: Python Flask
+- **Database**: Firebase Firestore
+- **Notifications**: Firebase Cloud Messaging
+- **Deployment**: Vercel
+- **CI/CD**: GitHub Actions
 
-This example uses the Web Server Gateway Interface (WSGI) with Flask to enable handling requests on Vercel with Serverless Functions.
+## Dependencies 📦
 
-## Running Locally
-
-```bash
-npm i -g vercel
-vercel dev
+```plaintext
+Flask==3.0.3
+flask-cors==4.0.0
+APScheduler
+requests
+firebase-admin~=6.7.0
+python-dotenv
 ```
 
-Your Flask application is now available at `http://localhost:3000`.
+## Environment Variables 🔐
 
-## One-Click Deploy
+The following environment variables are required:
 
-Deploy the example using [Vercel](https://vercel.com?utm_source=github&utm_medium=readme&utm_campaign=vercel-examples):
+```plaintext
+FIREBASE_TYPE
+FIREBASE_PROJECT_ID
+FIREBASE_PRIVATE_KEY_ID
+FIREBASE_PRIVATE_KEY
+FIREBASE_CLIENT_EMAIL
+FIREBASE_CLIENT_ID
+FIREBASE_AUTH_URI
+FIREBASE_TOKEN_URI
+FIREBASE_AUTH_PROVIDER_CERT_URL
+FIREBASE_CLIENT_CERT_URL
+FIREBASE_UNIVERSE_DOMAIN
+```
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fexamples%2Ftree%2Fmain%2Fpython%2Fflask3&demo-title=Flask%203%20%2B%20Vercel&demo-description=Use%20Flask%203%20on%20Vercel%20with%20Serverless%20Functions%20using%20the%20Python%20Runtime.&demo-url=https%3A%2F%2Fflask3-python-template.vercel.app%2F&demo-image=https://assets.vercel.com/image/upload/v1669994156/random/flask.png)
+## API Endpoints 🛣️
+
+### GET /ping
+
+Health check endpoint to keep the serverless function active.
+
+### GET /event
+
+Fetches latest IPL match details from TicketGenie and sends notifications if new matches are available.
+
+## Deployment 🚀
+
+This project is deployed on Vercel as a serverless application. The GitHub Actions workflow pings the endpoint every 5 minutes to prevent cold starts.
+
+## Architecture 🏗️
+
+1. The system periodically checks TicketGenie's API for new match listings
+2. When a new match is detected (especially CSK matches), it:
+   - Stores the match details in Firebase Firestore
+   - Sends push notifications via Firebase Cloud Messaging
+   - Updates the latest event record
+3. A GitHub Actions workflow keeps the serverless function warm
+
+## Contributing 🤝
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
