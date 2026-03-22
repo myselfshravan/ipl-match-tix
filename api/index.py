@@ -4,7 +4,6 @@ from datetime import datetime
 from .event import (
     send_push_notifications,
     send_all_notifications,
-    send_email_notification,
     fetch_event_details,
     store_event,
     get_last_stored_event,
@@ -106,21 +105,6 @@ def event():
         "results": events,
         "stored": store_success if events else False
     }), 200
-
-
-@app.route("/test-notify", methods=["GET"])
-def test_notify():
-    timestamp = datetime.now().isoformat()
-    dummy_event = {
-        "event_name": "TEST MATCH",
-        "team_1": "Chennai Super Kings",
-        "team_2": "Mumbai Indians",
-        "event_date": "Sat, Apr 05, 2026 7:30 PM",
-        "event_iso_date": "2026-04-05T19:30:00",
-        "venue": "MA Chidambaram Stadium, Chennai"
-    }
-    email_result = send_email_notification(dummy_event, [dummy_event])
-    return jsonify({"status": "done", "timestamp": timestamp, "email": email_result}), 200
 
 
 if __name__ == "__main__":
