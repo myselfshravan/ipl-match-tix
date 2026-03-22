@@ -1,0 +1,13 @@
+[project]
+name = "ipl-match-tix"
+version = "0.1.0"
+description = "Automated notification system that monitors IPL match ticket availability"
+requires-python = ">=3.13"
+dependencies = [
+    "Flask==3.0.3",
+    "flask-cors==4.0.0",
+    "APScheduler",
+    "requests",
+    "firebase-admin~=6.7.0",
+    "python-dotenv",
+]
