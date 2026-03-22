@@ -1,6 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials, messaging, firestore
 import requests
+import resend
 import os
 from datetime import datetime
 from dotenv import load_dotenv
@@ -93,10 +94,6 @@ def get_last_stored_event():
 
 
 def compare_events(new_event, stored_event):
-    # Check for Chennai Super Kings match
-    if new_event.get('team_2') == "Chennai Super Kings":
-        return True
-
     if not stored_event:
         return True
 
@@ -114,8 +111,67 @@ def compare_events(new_event, stored_event):
             new_event['team_2'] != stored_event['team_2'])
 
 
-def is_csk_match(event_data):
-    return event_data.get('team_2') == "Chennai Super Kings"
+def send_email_notification(event_data, all_events=None):
+    api_key = os.getenv("RESEND_API_KEY")
+    email_from = os.getenv("ALERT_EMAIL_FROM")
+    email_to = os.getenv("ALERT_EMAIL_TO")
+    if not all([api_key, email_from, email_to]):
+        print("Email config missing (RESEND_API_KEY, ALERT_EMAIL_FROM, ALERT_EMAIL_TO)")
+        return {"status": "skipped", "reason": "missing config"}
+
+    resend.api_key = api_key
+
+    subject = f"🎫 IPL Ticket Alert: {event_data['team_1']} vs {event_data['team_2']}"
+
+    # Build HTML email
+    rows = ""
+    events_to_show = all_events if all_events else [event_data]
+    for e in events_to_show:
+        highlight = ' style="background-color: #fff3cd;"' if e == event_data else ''
+        rows += f"""<tr{highlight}>
+            <td style="padding:8px;border:1px solid #ddd;">{e['team_1']} vs {e['team_2']}</td>
+            <td style="padding:8px;border:1px solid #ddd;">{e['event_date']}</td>
+            <td style="padding:8px;border:1px solid #ddd;">{e['venue']}</td>
+        </tr>"""
+
+    html = f"""
+    <div style="font-family:Arial,sans-serif;max-width:600px;">
+        <h2>🏏 IPL Ticket Change Detected!</h2>
+        <p><strong>Change:</strong> {event_data['team_1']} vs {event_data['team_2']}</p>
+        <p><strong>Date:</strong> {event_data['event_date']}</p>
+        <p><strong>Venue:</strong> {event_data['venue']}</p>
+        <p><a href="https://www.ticketgenie.in" style="background:#e63946;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;">Book Now on TicketGenie</a></p>
+        <hr>
+        <h3>All Upcoming Matches</h3>
+        <table style="border-collapse:collapse;width:100%;">
+            <tr style="background:#333;color:white;">
+                <th style="padding:8px;border:1px solid #ddd;">Match</th>
+                <th style="padding:8px;border:1px solid #ddd;">Date</th>
+                <th style="padding:8px;border:1px solid #ddd;">Venue</th>
+            </tr>
+            {rows}
+        </table>
+    </div>
+    """
+
+    try:
+        result = resend.Emails.send({
+            "from": email_from,
+            "to": [email_to],
+            "subject": subject,
+            "html": html,
+        })
+        print(f"✅ Email sent: {result}")
+        return {"status": "success", "result": result}
+    except Exception as e:
+        print(f"❌ Email error: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+def send_all_notifications(event_data, all_events=None):
+    email_result = send_email_notification(event_data, all_events)
+    push_result = send_push_notifications(event_data)
+    return {"email": email_result, "push": push_result}
 
 
 def fetch_event_details():

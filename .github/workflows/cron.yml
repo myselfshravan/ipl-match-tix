@@ -1,18 +1,30 @@
-name: Ping Flask Endpoint Every 5 Minutes
+name: IPL Ticket Monitor
 
 on:
-  workflow_dispatch: # allows manual run
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 
 jobs:
-  ping:
+  check-tickets:
+    name: Check IPL Ticket Changes
     runs-on: ubuntu-latest
     steps:
-      - name: Ping the Flask endpoint
+      - name: Ping endpoint for ticket changes
         run: |
-          curl -X GET https://ipl-match-tix.vercel.app/ping
-            if [ $? -ne 0 ]; then
-                echo "Failed to ping the endpoint"
-                exit 1
-            else
-                echo "Successfully pinged the endpoint"
-            fi
+          response=$(curl -s -w "\n%{http_code}" -X GET https://ipl-match-tix.vercel.app/ping)
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | sed '$d')
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+          if [ "$http_code" -ne 200 ]; then
+            echo "::error::Ping failed with status $http_code"
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## IPL Ticket Check" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Endpoint**: https://ipl-match-tix.vercel.app/ping" >> $GITHUB_STEP_SUMMARY

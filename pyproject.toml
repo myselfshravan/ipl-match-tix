@@ -10,4 +10,5 @@ dependencies = [
     "requests",
     "firebase-admin~=6.7.0",
     "python-dotenv",
+    "resend>=2.26.0",
 ]

@@ -3,6 +3,7 @@ from flask_cors import CORS
 from datetime import datetime
 from .event import (
     send_push_notifications,
+    send_all_notifications,
     fetch_event_details,
     store_event,
     get_last_stored_event,
@@ -42,26 +43,31 @@ def ping():
         f"[Cron] Latest upcoming event: {latest_event['team_1']} vs {latest_event['team_2']} on {latest_event['event_date']}")
     print(f"[Cron] Total upcoming events found: {len(events)}")
 
-    # Always store the latest event
-    store_success = store_event(latest_event)
-    if not store_success:
-        print("[Cron] Failed to store latest event in Firestore")
-
-    # Get last stored event from Firestore for notification check
+    # Get last stored event BEFORE storing new one (fix: was stored first, making comparison useless)
     stored_event = get_last_stored_event()
 
     # Compare events for notification
     if compare_events(latest_event, stored_event):
         notification_reason = "New event" if not stored_event else "Event change"
         print(f"[Cron] {notification_reason} detected: {latest_event['event_name']}")
-        send_push_notifications(latest_event)
+        results = send_all_notifications(latest_event, events)
+
+        # Store after comparison and notification
+        store_success = store_event(latest_event)
+        if not store_success:
+            print("[Cron] Failed to store latest event in Firestore")
+
         return {
             "status": "new_event",
             "event": latest_event,
             "reason": notification_reason,
             "timestamp": timestamp,
-            "stored": store_success
+            "stored": store_success,
+            "notifications": results
         }, 200
+
+    # Store even if no change (updates timestamp)
+    store_success = store_event(latest_event)
     print("[Cron] No changes detected requiring notification")
     return {
         "status": "no_change",
@@ -74,7 +80,9 @@ def ping():
 def notify():
     timestamp = datetime.now().isoformat()
     print(f"[Notify] Triggered at {timestamp}")
-    results = send_push_notifications()
+    events = fetch_event_details()
+    latest_event = events[0] if events else None
+    results = send_all_notifications(latest_event, events) if latest_event else send_push_notifications()
     return jsonify({"status": "done", "timestamp": timestamp, "results": results}), 200
 
 
