@@ -175,7 +175,7 @@ def send_all_notifications(event_data, all_events=None):
 
 
 def fetch_event_details():
-    url = "https://rcbmpapi.ticketgenie.in/ticket/eventlist/O"
+    url = "https://rcbscaleapi.ticketgenie.in/ticket/eventlist/O"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
         "Accept": "application/json",
